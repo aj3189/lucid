@@ -248,7 +248,7 @@ let re_info id alphabet vr =
   let all_letters = (get_all_letters re_alphabet) in
   let pre = translate vr.v_regex re_alphabet in
   let dfa = (plain_re_to_dfa pre all_letters) in
-  Printf.printf "Alphabet size %d\n" (List.length dfa.alphabet);
+  Printf.printf "Alphabet size %d\n, state size %d\n" (List.length dfa.alphabet) (States.cardinal dfa.states);
   let synthesized = synthesize id dfa in
     if not (check_unmabig_concat_vr vr re_alphabet) then Console.error_position vr.v_regex_span @@ Printf.sprintf "That concatenation may not be unambiguous";
     List.iter (fun letter -> (Printf.printf "%s: %d\n" (print_letter letter) (letter_to_int letter events (List.length re_preds)))) all_letters;

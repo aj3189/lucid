@@ -37,40 +37,22 @@ entry event dnsresponse_in(int src, int dst, int req_id);
 exit event dnspkt_out ();
 
 
-event request_in (int time); 
-event response_out (int time);
-event protected (int time);
-
-re<<1000>> myVR = (request_in(true) || response_out(true))*
-          .protected(@pt=time)
-          .response_out(time - ptval < 10000);
-
-exit event error(int timestamp);
-
-handle request_in(int time) {
-  if (transition(myVR, idx)) {
-      generate error(time);
-  }
-}
-
-handle response_out(int time) {
-  if (transition(myVR)) {
-      generate error(time);
-  }
-}
-
-handle protected(int time) {
-  if (transition(myVR)) {
-      generate error(time);
-  }
-}
 
 /*========================================
 =            count-min sketch            =
 ========================================*/
 
 global CMSTimeout.t<<32, 10, 2>> sketch = CMSTimeout.create(countmin_slots, seeds, T_INTERVAL);
+
+
 global BloomFilterTimeout.t<<10, 2>> firewall = BloomFilterTimeout.create(firewall_slots, seeds, T_INTERVAL, T_EMPTY);
+
+alphabet protect = dnspkt_out, protected;
+re<<1024>> myVR over protect = (dnspkt_out)*
+          .protected(@int protect_time=Sys.time())
+          .dnspkt_out((Sys.time() - protect_time) < T_INTERVAL);
+
+exit event error(int src, int dst, int timestamp);
 
 /* a DNS request. We assume its
 from a monitored host to some DNS server. */
@@ -81,6 +63,10 @@ handle dnsrequest_in(int src, int dst, int req_id) {
   if (count > THRESH) {
     // Only proceed if the host made a request, so it has an entry in the firewall
     BloomFilterTimeout.add_to_filter(firewall, [src; dst; req_id]);
+    int idx = (int<<32>>)hash<<10>>(15, src, dst);
+    if (transition(myVR, idx, protected())) {
+      printf ("Doing nothing");
+    }
   }
   // host not protected, always allow.
   generate dnspkt_out();
@@ -96,6 +82,10 @@ handle dnsresponse_in(int src, int dst, int req_id) {
   } else {
     // host not protected, always allow.
     generate dnspkt_out();
+    int idx = (int<<32>>)hash<<10>>(15, dst, src);
+    if (transition(myVR, idx, dnspkt_out())) {
+      generate error(src, dst, Sys.time());
+    } 
   }
 }
 
