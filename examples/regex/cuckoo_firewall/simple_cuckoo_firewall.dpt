@@ -34,14 +34,6 @@ event cuckoo_insert(eth_hdr eth, ip_hdr_prefix ip,
 
 
 
-
-global Array.t<<32>> key_src_1 = Array.create(1024);
-global Array.t<<32>> key_dst_1 = Array.create(1024);
-global Array.t<<32>> key_src_2 = Array.create(1024);
-global Array.t<<32>> key_dst_2 = Array.create(1024);
-
-global Array.t<<32>> cuckoo_inflight = Array.create(1);
-
 // high-level syntax for checking global correctness
 sre<<1>> msre = 
 IDX = {
@@ -65,6 +57,14 @@ DETECT{
         )
     )
 } => {printf ("Found error, either repeated more than 4 times, or mismatched saved fst");};
+global Array.t<<32>> key_src_1 = Array.create(1024);
+global Array.t<<32>> key_dst_1 = Array.create(1024);
+global Array.t<<32>> key_src_2 = Array.create(1024);
+global Array.t<<32>> key_dst_2 = Array.create(1024);
+
+global Array.t<<32>> cuckoo_inflight = Array.create(1);
+
+
 
 memop incr(int memval, int incrval) {
     return memval + incrval;
