@@ -18,35 +18,6 @@ const int<<8>> Callback_SYNACK = 0;
 const int<<8>> Callback_TAGACK = 1; 
 const int <<32>> MAX_SYNCOOKIE_AGE = 3; 
 
-//Bloom Filter arrays 
-//NOTE: it seems the interpreter has a hard time with array lengths of 2^16, use 2^10 for now 
-global Array.t<<1>> bf_arr1 = Array.create(1024); 
-global Array.t<<1>> bf_arr2 = Array.create(1024); 
-
-//Timestamp delta array 
-global Array.t<<32>> ts_delta_arr = Array.create(1);
-
-
-entry event iptcp_to_server_syn(int<<32>> src, int<<32>> dst, int<<16>> src_port, int<<16>> dst_port, int<<32>> seq_no);
-
-//Local events 
-event siphash_intermediate(int<<32>> src, int<<32>> dst, int<<16>> src_port, int<<16>> dst_port, int<<32>> _seq_no, int<<32>> _ack_no, int<<32>> cookie_time,  
-	int<<32>> v0, int<<32>> v1, int<<32>> v2, int<<32>> v3, 
-	int<<32>> a0, int<<32>> a1, int<<32>> a2, int<<32>> a3,
-	int<<8>> round, int<<8>> callback_type, int<<8>> egr_port);
-
-//Exit events 
-
-exit event iptcp_craft_out(
-        int<<32>> src, int<<32>> dst, int<<16>> src_port, int<<16>> dst_port,
-        int<<32>> seq_no, int<<32>> ack_no);
-
-// not a real exit event, just for reporting to regex
-event iptcp_craft_out_dummy(
-        int<<32>> src, int<<32>> dst, int<<16>> src_port, int<<16>> dst_port,
-        int<<32>> seq_no, int<<32>> ack_no);
-
-
 
 
 //====== Added RegEx ======
@@ -76,6 +47,34 @@ DETECT{
     )
 } => {printf ("Good");};
 
+
+//Bloom Filter arrays 
+//NOTE: it seems the interpreter has a hard time with array lengths of 2^16, use 2^10 for now 
+global Array.t<<1>> bf_arr1 = Array.create(1024); 
+global Array.t<<1>> bf_arr2 = Array.create(1024); 
+
+//Timestamp delta array 
+global Array.t<<32>> ts_delta_arr = Array.create(1);
+
+
+entry event iptcp_to_server_syn(int<<32>> src, int<<32>> dst, int<<16>> src_port, int<<16>> dst_port, int<<32>> seq_no);
+
+//Local events 
+event siphash_intermediate(int<<32>> src, int<<32>> dst, int<<16>> src_port, int<<16>> dst_port, int<<32>> _seq_no, int<<32>> _ack_no, int<<32>> cookie_time,  
+	int<<32>> v0, int<<32>> v1, int<<32>> v2, int<<32>> v3, 
+	int<<32>> a0, int<<32>> a1, int<<32>> a2, int<<32>> a3,
+	int<<8>> round, int<<8>> callback_type, int<<8>> egr_port);
+
+//Exit events 
+
+exit event iptcp_craft_out(
+        int<<32>> src, int<<32>> dst, int<<16>> src_port, int<<16>> dst_port,
+        int<<32>> seq_no, int<<32>> ack_no);
+
+// not a real exit event, just for reporting to regex
+event iptcp_craft_out_dummy(
+        int<<32>> src, int<<32>> dst, int<<16>> src_port, int<<16>> dst_port,
+        int<<32>> seq_no, int<<32>> ack_no);
 
 //Handlers
 handle iptcp_craft_out_dummy(
