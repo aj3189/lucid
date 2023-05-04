@@ -70,7 +70,7 @@ let allowed_bool_op = function
 ;;
 
 let allowed_int_op = function
-  | Plus | Sub | BitAnd | BitOr -> true
+  | Plus | Sub | BitAnd | BitOr | BitXor -> true
   | _ -> false
 ;;
 
