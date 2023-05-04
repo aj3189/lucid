@@ -18,6 +18,7 @@ const int FALSE = 0;
 const int<<9>> head = 0;
 const int<<9>> tail = 2;
 const int<<9>> succ = 1;
+const int<<9>> location = 0;
 /* Global data: the registers which we're replicating, plus metadata about each of them */
 global Array.t<<32>> pending = Array.create(NUM_REGISTERS);
 global Array.t<<32>> sequence_nums = Array.create(NUM_REGISTERS);
@@ -57,7 +58,7 @@ handle write(int idx, int seq, int data) {
   } else {
     bool continue = true;
     /* The first router sets the sequence number, all other routers check it */
-    if ((int<<9>>)self == head) {
+    if (location == head) {
       seq = Array.update(sequence_nums, idx, incr, 1, incr, 1);
     } else {
       int seq2 = Array.update(sequence_nums, idx, check_and_incr, seq, check_and_incr, seq);
@@ -68,7 +69,7 @@ handle write(int idx, int seq, int data) {
     } else {
       Array.set(registers, idx, data);
       // Either propagate to next in chain, or tell head we're done
-      if ((int<<9>>)self != tail) {
+      if (location != tail) {
         generate_port (succ, write(idx, seq, data));
       } else {
         generate_port (head, ack(idx));
@@ -80,7 +81,7 @@ handle write(int idx, int seq, int data) {
 // Set pending bit to false across the whole chain
 handle ack(int idx) {
   Array.set(pending, idx, FALSE);
-  if ((int<<9>>)self != tail) {
+  if (location != tail) {
     generate_port (succ, ack(idx));
   }
 }

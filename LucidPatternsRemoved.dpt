@@ -1,271 +1,155 @@
-const seed_1 int<<32>> = 1;
+memop fst(int<<'a~0>> x,int<<'a~0>> y)
+ {return x;}
 
-const seed_2 int<<32>> = 1;
+memop snd(int<<'a~0>> x,int<<'a~0>> y)
+ {return y;}
 
-const NULL int<<32>> = 0;
+memop sum(int<<'a~0>> x,int<<'a~0>> y)
+ {return x+y;}
+
+memop diff(int<<'a~0>> x,int<<'a~0>> y)
+ {return x-y;}
+
+memop max(int<<'a~0>> x,int<<'a~0>> y)
+ {if (x<y) {
+return y;
+} else {
+return x;
+}}
+
+memop min(int<<'a~0>> x,int<<'a~0>> y)
+ {if (x<y) {
+return x;
+} else {
+return y;
+}}
+
+memop eq(int<<'a~0>> x,int<<'a~0>> y)
+ {if (x==y) {
+return 1;
+} else {
+return 0;
+}}
+
+memop gt(int<<'a~0>> x,int<<'a~0>> y)
+ {if (x>y) {
+return 1;
+} else {
+return 0;
+}}
+
+memop lt(int<<'a~0>> x,int<<'a~0>> y)
+ {if (x<y) {
+return 1;
+} else {
+return 0;
+}}
+
+memop incr(int<<'a~0>> x,int<<'a~0>> y)
+ {return x+1;}
+
+const NUM_REGISTERS int<<32>> = 10;
 
 const TRUE int<<32>> = 1;
 
 const FALSE int<<32>> = 0;
 
-const TOS_TRUSTED int<<8>> = 1;
+const head int<<9>> = 0;
 
-type eth_hdr = {int<<48>> dmac; int<<48>> smac; int<<16>> etype}
+const tail int<<9>> = 2;
 
-type ip_hdr_prefix = {int<<8>> v_ihl; int<<8>> tos; int<<16>> len; int<<16>> id; int<<16>> flags_frag; int<<8>> ttl; int<<8>> proto; int<<16>> csum}
+const succ int<<9>> = 1;
 
-entry event ip_pkt(eth_hdr eth,ip_hdr_prefix ip,int<<32>> src,int<<32>> dst) ;
+const location int<<9>> = 0;
 
-event cuckoo_insert(eth_hdr eth,ip_hdr_prefix ip,int<<32>> src,int<<32>> dst,int<<32>> port,int<<32>> fst_src,int<<32>> fst_dst) ;
+global Array.t<<32>> pending = Array.create(NUM_REGISTERS);
 
-memop re12351sdaCheckThenSet(int<<'a~0>> memval,int<<'a~0>> newval)
- {if (memval==0) {
-return newval;
+
+global Array.t<<32>> sequence_nums = Array.create(NUM_REGISTERS);
+
+
+global Array.t<<32>> registers = Array.create(NUM_REGISTERS);
+
+
+event write(int<<32>> idx,int<<32>> seq,int<<32>> data) ;
+
+event ack(int<<32>> idx) ;
+
+event process(int<<32>> src,int<<32>> dst,int<<32>> idx) ;
+
+entry event pktin(int<<32>> src,int<<32>> dst) ;
+
+exit event continue(int<<32>> src,int<<32>> dst) ;
+
+memop tru(int<<32>> dummy,int<<32>> dummy2)
+ {return TRUE;}
+
+memop check_and_incr(int<<32>> curr,int<<32>> next)
+ {if (next==curr+1) {
+return next;
 } else {
-return memval;
+return curr;
 }}
 
-global Array.t<<32>> assigned_var_msresaved_src = Array.create(1);
-
-
-global Array.t<<32>> assigned_var_msresaved_dst = Array.create(1);
-
-
-global Array.t<<8>> msre = Array.create(1);
-
-
-memop msrememop0(int<<8>> memval,int<<8>> f,int<<8>> g)
- {bool b1 = memval+g!=4;
-bool b2 = memval+g<5;
-if (b1&&b2) {
-cell1 = 1+memval;
+handle write(int<<32>> idx,int<<32>> seq,int<<32>> data) {
+int<<32>> update_res = Array.update(pending,idx,fst,0,tru,0);
+if (update_res==TRUE) {
+generate write(idx,seq,data);
 } else {
-if (true) {
-cell1 = f|memval;
+bool continue = true;
+if (location==head) {
+seq = Array.update(sequence_nums,idx,incr,1,incr,1);
+} else {
+int<<32>> seq2 = Array.update(sequence_nums,idx,check_and_incr,seq,check_and_incr,seq);
+if (seq2!=seq) {
+continue = false;
 } 
 }
-if (true) {
-return cell1;
-} }
-
-memop msrememop1(int<<8>> memval,int<<8>> f,int<<8>> g)
- {bool b1 = memval+g>5;
-bool b2 = memval+0!=0;
-if (b1&&b2) {
-cell1 = g^^0;
+if (continue==false) {
+generate write(idx,seq,data);
 } else {
-if (true) {
-cell1 = 3^^memval;
+Array.set(registers,idx,data);
+if (location!=tail) {
+generate_port (succ, write(idx,seq,data));
+} else {
+generate_port (head, ack(idx));
+}
+}
+}
+}
+
+handle ack(int<<32>> idx) {
+Array.set(pending,idx,FALSE);
+if (location!=tail) {
+generate_port (succ, ack(idx));
 } 
 }
-if (true) {
-return cell1;
-} }
 
-memop msrememop3(int<<8>> memval,int<<8>> f,int<<8>> g)
- {bool b1 = memval+0!=3;
-bool b2 = memval+f>8;
-if (b1&&b2) {
-cell1 = g+8;
-} else {
-if (true) {
-cell1 = g^^8;
+fun bool need_to_write(int<<32>> src,int<<32>> dst) {
+return false;
+}
+
+fun void process_fun(int<<32>> src,int<<32>> dst,int<<32>> idx) {
+int<<32>> foo = Array.get(registers,idx);
+if (foo==0) {
+generate continue(src,dst);
 } 
 }
-if (true) {
-return cell1;
-} }
 
-global Array.t<<32>> key_src_1 = Array.create(1024);
-
-
-global Array.t<<32>> key_dst_1 = Array.create(1024);
-
-
-global Array.t<<32>> key_src_2 = Array.create(1024);
-
-
-global Array.t<<32>> key_dst_2 = Array.create(1024);
-
-
-global Array.t<<32>> cuckoo_inflight = Array.create(1);
-
-
-memop incr(int<<32>> memval,int<<32>> incrval)
- {return memval+incrval;}
-
-memop always_mem(int<<32>> memval,int<<32>> newval)
- {return memval;}
-
-memop always_new(int<<32>> memval,int<<32>> newval)
- {return newval;}
-
-memop mem_eq_search(int<<32>> memval,int<<32>> searchval)
- {if (memval==searchval) {
-return TRUE;
-} else {
-return FALSE;
-}}
-
-memop new_if_null(int<<32>> memval,int<<32>> newval)
- {if (memval==NULL) {
-return newval;
-} else {
-return memval;
-}}
-
-memop null_if_eq(int<<32>> memval,int<<32>> searchval)
- {if (memval==searchval) {
-return NULL;
-} else {
-return memval;
-}}
-
-handle ip_pkt(eth_hdr eth,ip_hdr_prefix ip,int<<32>> src,int<<32>> dst) {
-bool ansmsre = true;
-int<<'idxvalsize~0>> msreidx = 0;
-int<<8>> f_synthesized_meta_varmsre = 0;
-int<<8>> g_synthesized_meta_varmsre = 0;
-int<<8>> memop_synthesized_meta_varmsre = 0;
-int<<32>> saved_src = Array.setm(assigned_var_msresaved_src,msreidx,re12351sdaCheckThenSet,src);
-int<<32>> saved_dst = Array.setm(assigned_var_msresaved_dst,msreidx,re12351sdaCheckThenSet,dst);
-f_synthesized_meta_varmsre = 16;
-g_synthesized_meta_varmsre = 241;
-memop_synthesized_meta_varmsre = 1;
-int<<8>> resmsre = 0;
-match memop_synthesized_meta_varmsre with 
-| 1 -> {
-resmsre = Array.update_complex(msre,msreidx,msrememop1,f_synthesized_meta_varmsre,g_synthesized_meta_varmsre,0);
+handle process(int<<32>> src,int<<32>> dst,int<<32>> idx) {
+process_fun(src,dst,idx);
 }
-match resmsre with 
-| 225 -> {
-ansmsre = true;
-}
-| 246 -> {
-ansmsre = true;
-}
-| _ -> {
-ansmsre = false;
-}
-if (ansmsre) {
-printf "Found error, either repeated more than 4 times, or mismatched saved fst" ;
+
+handle pktin(int<<32>> src,int<<32>> dst) {
+bool ntw = need_to_write(src,dst);
+if (ntw) {
+generate_port (head, write(0,0,0));
 } 
-int<<32>> ingress_port32 = hash<<32>>(0,ingress_port);
-if (ip#tos==TOS_TRUSTED) {
-int<<8>> idx_1 = hash<<8>>(seed_1,src);
-int<<32>> stg_1_src = Array.update(key_src_1,idx_1,null_if_eq,src,new_if_null,src);
-int<<32>> stg_1_dst = Array.update(key_dst_1,idx_1,null_if_eq,dst,new_if_null,dst);
-if (stg_1_src==NULL&&stg_1_dst==NULL) {
-generate_port (ingress_port, ip_pkt(eth,ip,src,dst));
+int<<32>> idx = hash<<32>>(0,src,dst);
+int<<32>> r = Array.get(pending,idx);
+if (r==TRUE) {
+generate_port (tail, process(src,dst,idx));
 } else {
-int<<8>> idx_2 = hash<<8>>(seed_2,dst);
-int<<32>> stg_2_src = Array.update(key_src_2,idx_2,null_if_eq,src,new_if_null,src);
-int<<32>> stg_2_dst = Array.update(key_dst_2,idx_2,null_if_eq,dst,new_if_null,dst);
-if (stg_2_src==NULL&&stg_2_dst==NULL) {
-generate_port (ingress_port, ip_pkt(eth,ip,src,dst));
-} else {
-int<<32>> cuckoo_used = Array.update(cuckoo_inflight,0,always_mem,NULL,always_new,TRUE);
-if (cuckoo_used==FALSE) {
-generate cuckoo_insert(eth,ip,src,dst,ingress_port32,src,dst);
-} 
-}
-}
-} else {
-int<<8>> idx_1 = hash<<8>>(seed_1,dst);
-int<<32>> src_match_1 = Array.update(key_src_1,idx_1,mem_eq_search,dst,always_mem,0);
-int<<32>> dst_match_1 = Array.update(key_dst_1,idx_1,mem_eq_search,src,always_mem,NULL);
-int<<8>> idx_2 = hash<<8>>(seed_2,src);
-int<<32>> src_match_2 = Array.update(key_src_2,idx_2,mem_eq_search,dst,always_mem,0);
-int<<32>> dst_match_2 = Array.update(key_dst_2,idx_2,mem_eq_search,src,always_mem,NULL);
-if (src_match_1==TRUE&&dst_match_1==TRUE||src_match_2==TRUE&&dst_match_2==TRUE) {
-generate_port (ingress_port, ip_pkt(eth,ip,src,dst));
-} 
-}
-}
-
-handle cuckoo_insert(eth_hdr eth,ip_hdr_prefix ip,int<<32>> src,int<<32>> dst,int<<32>> port,int<<32>> fst_src,int<<32>> fst_dst) {
-bool ansmsre = true;
-int<<'idxvalsize~0>> msreidx = 0;
-int<<8>> f_synthesized_meta_varmsre = 0;
-int<<8>> g_synthesized_meta_varmsre = 0;
-int<<8>> memop_synthesized_meta_varmsre = 0;
-int<<32>> saved_src = Array.get(assigned_var_msresaved_src,msreidx);
-int<<32>> saved_dst = Array.get(assigned_var_msresaved_dst,msreidx);
-int<<'predsizeval0~0>> pred0msre = fst_src-saved_src;
-int<<'predsizeval1~0>> pred1msre = fst_dst-saved_dst;
-match (pred0msre,pred1msre) with 
-| 0,0 -> {
-f_synthesized_meta_varmsre = 241;
-g_synthesized_meta_varmsre = 13;
-memop_synthesized_meta_varmsre = 0;
-}
-| 0,_ -> {
-f_synthesized_meta_varmsre = 13;
-g_synthesized_meta_varmsre = 233;
-memop_synthesized_meta_varmsre = 3;
-}
-| _,0 -> {
-f_synthesized_meta_varmsre = 13;
-g_synthesized_meta_varmsre = 233;
-memop_synthesized_meta_varmsre = 3;
-}
-| _,_ -> {
-f_synthesized_meta_varmsre = 14;
-g_synthesized_meta_varmsre = 233;
-memop_synthesized_meta_varmsre = 3;
-}
-int<<8>> resmsre = 0;
-match memop_synthesized_meta_varmsre with 
-| 0 -> {
-resmsre = Array.update_complex(msre,msreidx,msrememop0,f_synthesized_meta_varmsre,g_synthesized_meta_varmsre,0);
-}
-| 3 -> {
-resmsre = Array.update_complex(msre,msreidx,msrememop3,f_synthesized_meta_varmsre,g_synthesized_meta_varmsre,0);
-}
-printf "state machine transitioned to %d" resmsre;
-match resmsre with 
-| 225 -> {
-ansmsre = true;
-}
-| 246 -> {
-ansmsre = true;
-}
-| _ -> {
-ansmsre = false;
-}
-if (ansmsre) {
-printf "Found error, either repeated more than 4 times, or mismatched saved fst" ;
-} 
-int<<9>> port9 = hash<<9>>(0,port);
-bool insert_success = false;
-bool insert_fail = false;
-int<<32>> victim_src = NULL;
-int<<32>> victim_dst = NULL;
-int<<8>> idx_1 = hash<<8>>(seed_1,src);
-int<<32>> stg_1_src = Array.update(key_src_1,idx_1,null_if_eq,NULL,always_new,src);
-int<<32>> stg_1_dst = Array.update(key_dst_1,idx_1,null_if_eq,NULL,always_new,dst);
-if (stg_1_src==NULL&&stg_1_dst==NULL) {
-insert_success = true;
-} else {
-int<<8>> idx_2 = hash<<8>>(seed_2,stg_1_dst);
-int<<32>> stg_2_src = Array.update(key_src_2,idx_2,null_if_eq,stg_1_src,always_new,stg_1_src);
-int<<32>> stg_2_dst = Array.update(key_dst_2,idx_2,null_if_eq,stg_1_dst,always_new,stg_1_dst);
-if (stg_2_src==NULL&&stg_2_dst==NULL) {
-insert_success = true;
-} else {
-victim_src = stg_2_src;
-victim_dst = stg_2_dst;
-}
-}
-if (victim_src==fst_src&&victim_dst==fst_dst) {
-insert_fail = true;
-} 
-if (insert_success==true||insert_fail==true) {
-Array.set(cuckoo_inflight,0,FALSE);
-if (insert_success==true) {
-generate_port (port9, ip_pkt(eth,ip,src,dst));
-} 
-} else {
-generate cuckoo_insert(eth,ip,port,victim_src,victim_dst,fst_src,fst_dst);
+process_fun(src,dst,idx);
 }
 }
