@@ -29,8 +29,6 @@ global Array.t<<32>> key_src_2 = Array.create(1024);
 global Array.t<<32>> key_dst_2 = Array.create(1024);
 global Array.t<<32>> cuckoo_inflight = Array.create(1);
 
-
-
 memop incr(int memval, int incrval) {
     return memval + incrval;
 }

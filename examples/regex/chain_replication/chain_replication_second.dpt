@@ -18,19 +18,6 @@ const int FALSE = 0;
 const int<<9>> head = 0;
 const int<<9>> tail = 2;
 const int<<9>> succ = 1;
-
-/* Global data: the registers which we're replicating, plus metadata about each of them */
-global Array.t<<32>> pending = Array.create(NUM_REGISTERS);
-global Array.t<<32>> sequence_nums = Array.create(NUM_REGISTERS);
-global Array.t<<32>> registers = Array.create(NUM_REGISTERS);
-
-event write(int idx, int seq, int data);
-event ack(int idx);
-
-event process(int src, int dst, int idx);
-
-entry event pktin(int src, int dst);
-exit event continue(int src, int dst);
 // check #2: two write to same index, before ack
 sre<<4096>> re_check2 = 
 IDX = {
@@ -39,7 +26,7 @@ IDX = {
 }
 DETECT{
     (
-      write().write().ack()
+      write.write.ack
     )
 } => {printf ("Error");};
 
