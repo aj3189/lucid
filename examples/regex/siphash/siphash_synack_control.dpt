@@ -72,10 +72,6 @@ handle  siphash_intermediate(int<<32>> src, int<<32>> dst, int<<16>> src_port, i
                                 src,dst,src_port,dst_port,
                                 //simply pass along seq_no and ack_no
                                 _seq_no, _ack_no);
-                generate iptcp_craft_out_dummy(
-                                src,dst,src_port,dst_port,
-                                //simply pass along seq_no and ack_no
-                                _seq_no, _ack_no);
 	}
 	else if(round==13 && callback_type==Callback_SYNACK){
 
@@ -84,9 +80,6 @@ handle  siphash_intermediate(int<<32>> src, int<<32>> dst, int<<16>> src_port, i
 
                 //reflect syn-ack back to client at port 9
                 generate iptcp_craft_out(
-                dst,src,dst_port,src_port,
-                cookie_out, seq_no_plus1);
-                generate iptcp_craft_out_dummy(
                 dst,src,dst_port,src_port,
                 cookie_out, seq_no_plus1);
 	}
