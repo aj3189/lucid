@@ -62,6 +62,44 @@ const succ int<<9>> = 1;
 
 const location int<<9>> = 0;
 
+memop re12351sdaCheckThenSet(int<<'memvalsize~0>> memval,int<<'newvalsize~0>> newval)
+ {if (memval==0) {
+return newval;
+} else {
+return memval;
+}}
+
+global Array.t<<8>> re_check2 = Array.create(4096);
+
+
+memop re_check2memop2(int<<8>> memval,int<<8>> f,int<<8>> g)
+ {bool b1 = memval+g>8;
+bool b2 = 0==4;
+if (b1||b2) {
+cell1 = f|memval;
+} else {
+if (true) {
+cell1 = 8+8;
+} 
+}
+if (true) {
+return cell1;
+} }
+
+memop re_check2memop3(int<<8>> memval,int<<8>> f,int<<8>> g)
+ {bool b1 = memval+0==1;
+bool b2 = memval+f>8;
+if (b1||b2) {
+cell1 = g|3;
+} else {
+if (true) {
+cell1 = g^^0;
+} 
+}
+if (true) {
+return cell1;
+} }
+
 global Array.t<<32>> pending = Array.create(NUM_REGISTERS);
 
 
@@ -92,6 +130,29 @@ return curr;
 }}
 
 handle write(int<<32>> idx,int<<32>> seq,int<<32>> data) {
+if ({bool ansre_check2 = true;
+int<<'idxvalsize~0>> re_check2idx = (int<<32>>)hash<<12>>(1,idx);
+int<<8>> f_synthesized_meta_varre_check2 = 0;
+int<<8>> g_synthesized_meta_varre_check2 = 0;
+int<<8>> memop_synthesized_meta_varre_check2 = 0;
+f_synthesized_meta_varre_check2 = 163;
+g_synthesized_meta_varre_check2 = 97;
+memop_synthesized_meta_varre_check2 = 2;
+int<<8>> resre_check2 = 0;
+match memop_synthesized_meta_varre_check2 with 
+| 2 -> {
+resre_check2 = Array.update_complex(re_check2,re_check2idx,re_check2memop2,f_synthesized_meta_varre_check2,g_synthesized_meta_varre_check2,0);
+}
+printf "state machine transitioned to %d" resre_check2;
+match resre_check2 with 
+| 177 -> {
+ansre_check2 = true;
+}
+| _ -> {
+ansre_check2 = false;
+}; return ansre_check2}) {
+printf "Error" ;
+} 
 int<<32>> update_res = Array.update(pending,idx,fst,0,tru,0);
 if (update_res==TRUE) {
 generate write(idx,seq,data);
@@ -119,6 +180,29 @@ generate_port (head, ack(idx));
 }
 
 handle ack(int<<32>> idx) {
+if ({bool ansre_check2 = true;
+int<<'idxvalsize~0>> re_check2idx = (int<<32>>)hash<<12>>(1,idx);
+int<<8>> f_synthesized_meta_varre_check2 = 0;
+int<<8>> g_synthesized_meta_varre_check2 = 0;
+int<<8>> memop_synthesized_meta_varre_check2 = 0;
+f_synthesized_meta_varre_check2 = 248;
+g_synthesized_meta_varre_check2 = 177;
+memop_synthesized_meta_varre_check2 = 3;
+int<<8>> resre_check2 = 0;
+match memop_synthesized_meta_varre_check2 with 
+| 3 -> {
+resre_check2 = Array.update_complex(re_check2,re_check2idx,re_check2memop3,f_synthesized_meta_varre_check2,g_synthesized_meta_varre_check2,0);
+}
+printf "state machine transitioned to %d" resre_check2;
+match resre_check2 with 
+| 177 -> {
+ansre_check2 = true;
+}
+| _ -> {
+ansre_check2 = false;
+}; return ansre_check2}) {
+printf "Error" ;
+} 
 Array.set(pending,idx,FALSE);
 if (location!=tail) {
 generate_port (succ, ack(idx));
@@ -137,11 +221,14 @@ generate continue(src,dst);
 }
 
 handle process(int<<32>> src,int<<32>> dst,int<<32>> idx) {
-process_fun(src,dst,idx);
+int<<32>> foo = Array.get(registers,idx);
+if (foo==0) {
+generate continue(src,dst);
+} 
 }
 
 handle pktin(int<<32>> src,int<<32>> dst) {
-bool ntw = need_to_write(src,dst);
+bool ntw = false;
 if (ntw) {
 generate_port (head, write(0,0,0));
 } 
@@ -150,6 +237,9 @@ int<<32>> r = Array.get(pending,idx);
 if (r==TRUE) {
 generate_port (tail, process(src,dst,idx));
 } else {
-process_fun(src,dst,idx);
+int<<32>> foo = Array.get(registers,idx);
+if (foo==0) {
+generate continue(src,dst);
+} 
 }
 }
